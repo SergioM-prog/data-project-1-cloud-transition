@@ -7,3 +7,9 @@ variable "region" {
   description = "Región de GCP donde se desplegarán todos los recursos"
   type        = string
 }
+
+variable "environment" {
+  type        = string
+  description = "El nombre del entorno (sandbox, dev, prod...)"
+  default     = "dev" # Le ponemos un valor por defecto seguro
+}
