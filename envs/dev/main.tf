@@ -6,4 +6,6 @@
 module "bigquery" {
   source = "../../modules/bigquery"
   region = var.region
+  environment                = "dev"
+  enable_deletion_protection = false  # Permite terraform destroy limpio
 }

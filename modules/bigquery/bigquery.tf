@@ -3,15 +3,16 @@
 # =============================================================================
 
 resource "google_bigquery_dataset" "air_quality_dataset" {
-  dataset_id                 = "air_quality_dataset"
+  # Nombramos el dataset dinámicamente: ej. air_quality_dataset_dev
+  dataset_id                 = "air_quality_dataset_${var.environment}"
   location                   = var.region
-  delete_contents_on_destroy = true
+  delete_contents_on_destroy = !var.enable_deletion_protection
 }
 
 resource "google_bigquery_table" "valencia_air" {
   dataset_id          = google_bigquery_dataset.air_quality_dataset.dataset_id
   table_id            = "valencia_air"
-  deletion_protection = false
+  deletion_protection = var.enable_deletion_protection
 
   schema = jsonencode([
     { name = "objectid",     type = "INTEGER", mode = "REQUIRED" },
