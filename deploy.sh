@@ -100,7 +100,7 @@ echo "✅ Terraform validado correctamente."
 
 # Exportar el plan
 terraform plan -out=main.tfplan
-terraform apply
+terraform apply main.tfplan
 
 # Volvemos a la raíz (subimos dos niveles)
 cd ../..
@@ -114,6 +114,15 @@ echo "Fase 1 completada. Infraestructura base lista para el entorno '$ENV'."
 
 echo ""
 echo ">>> FASE 2: Construyendo y subiendo imagen Docker a Artifact Registry..."
+
+# Comprobar si docker está abierto (Comprobación pre-flight)
+echo "-> Comprobando el estado de Docker..."
+if ! docker info > /dev/null 2>&1; then
+    echo "❌ ERROR: Docker no está en ejecución."
+    echo "👉 Por favor, abre Docker Desktop"
+    exit 1
+fi
+echo "✅ Docker está listo."
 
 # Autenticar la terminal de Docker con Google Cloud
 gcloud auth configure-docker $REGION-docker.pkg.dev --quiet
