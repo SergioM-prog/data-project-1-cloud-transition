@@ -3,6 +3,10 @@
 # Llama a los módulos pasándoles las variables necesarias.
 # =============================================================================
 
+# =============================================================================
+# 1. DATA WAREHOUSE (BigQuery)
+# =============================================================================
+
 module "bigquery" {
   source = "../../modules/bigquery"
   region = var.region
@@ -21,6 +25,10 @@ module "bigquery" {
   ]
 }
 
+# =============================================================================
+# 2. DATA LAKE & STORAGE (Cloud Storage)
+# =============================================================================
+
 # Llamada 1: Creamos el Data Lake (Raw)
 module "raw_bucket" {
   source                     = "../../modules/gcs"
@@ -35,4 +43,26 @@ module "temp_bucket" {
   bucket_name                = "${var.project_id}-air-quality-temp-${var.environment}"
   region                     = var.region
   enable_deletion_protection = false # Estamos en dev, queremos poder borrarlo
+}
+
+# =============================================================================
+# 3. IDENTITY (Service Accounts)
+# =============================================================================
+
+# Creamos la service account de ingestión
+module "ingestion_sa" {
+  source                     = "../../modules/service_account"
+  account_id                 = "sa-ingestion-${var.environment}"
+  display_name               = "Service Account para Script de Ingestion"
+}
+
+# =============================================================================
+# 4. ACCESS MANAGEMENT (IAM Bindings)
+# =============================================================================
+
+# Asignamos permisos a la sa-ingestion sólo de escritura en el bucket siguiendo el principio de mínimo privilegio
+resource "google_storage_bucket_iam_member" "ingestion_raw_access" {
+  bucket = module.raw_bucket.bucket_name
+  role   = "roles/storage.objectCreator"
+  member = "serviceAccount:${module.ingestion_sa.email}"
 }
