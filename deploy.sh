@@ -78,6 +78,7 @@ gcloud services enable \
         artifactregistry.googleapis.com \
         --project=$PROJECT_ID
 
+
 # =============================================================================
 # FASE 1 — Terraform apply
 # =============================================================================
@@ -88,6 +89,17 @@ echo ">>> FASE 1: Desplegando infraestructura base para el entorno '$ENV'..."
 cd envs/$ENV
 
 terraform init -upgrade
+
+# Validar la sintaxis (Fail Fast)
+echo "-> Validando código Terraform..."
+if ! terraform validate; then
+    echo "❌ ERROR: La validación de Terraform ha fallado. Revisa tus archivos .tf"
+    exit 1
+fi
+echo "✅ Terraform validado correctamente."
+
+# Exportar el plan
+terraform plan -out=main.tfplan
 terraform apply
 
 # Volvemos a la raíz (subimos dos niveles)
@@ -95,6 +107,32 @@ cd ../..
 
 echo ""
 echo "Fase 1 completada. Infraestructura base lista para el entorno '$ENV'."
+
+# =============================================================================
+# FASE 2 — Construcción y subida de la imagen Docker (CI/CD)
+# =============================================================================
+
+echo ""
+echo ">>> FASE 2: Construyendo y subiendo imagen Docker a Artifact Registry..."
+
+# Autenticar la terminal de Docker con Google Cloud
+gcloud auth configure-docker $REGION-docker.pkg.dev --quiet
+
+# Definir la URL completa de la imagen
+IMAGE_URL="$REPO/ingestion:latest"
+
+# Construir la imagen leyendo el Dockerfile de la carpeta src/ingestion
+echo "-> Empaquetando código local..."
+docker build -t $IMAGE_URL ./src/ingestion
+
+# 4. Subir la imagen al repositorio
+echo "-> Subiendo imagen a GCP ($IMAGE_URL)..."
+docker push $IMAGE_URL
+
+echo "✅ Imagen subida con éxito!"
+
+echo ""
+echo "Fase 2 completada. Infraestructura base lista para el entorno '$ENV'."
 
 # =============================================================================
 # DESTROY OPCIONAL — Solo disponible en entorno dev

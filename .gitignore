@@ -23,3 +23,6 @@ envs/**/*.tfplan
 
 # Archivo de variables de entorno local
 .env
+
+# Planes de terraform guardados
+*.tfplan
