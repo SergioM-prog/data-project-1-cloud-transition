@@ -39,10 +39,10 @@ echo "Proyecto : $PROJECT_ID"
 echo "Región   : $REGION"
 echo "Repo     : $REPO"
 echo ""
-read -p "¿Continuar con el despliegue en este proyecto y región? (s/n): " CONFIRM
+read -p "¿Continuar con el despliegue en este proyecto y región? (yes/no): " CONFIRM
 
 # Validar la confirmación del usuario
-if [ "$CONFIRM" != "s" ]; then
+if [ "$CONFIRM" != "yes" ]; then
   echo "Cancelado."
   exit 1
 fi
@@ -54,6 +54,7 @@ fi
 cat > envs/$ENV/terraform.tfvars <<EOF
 project_id = "$PROJECT_ID"
 region     = "$REGION"
+environment     = "$ENV"
 EOF
 
 echo "terraform.tfvars generado en envs/$ENV/."
@@ -83,3 +84,23 @@ cd ../..
 
 echo ""
 echo "Fase 1 completada. Infraestructura base lista para el entorno '$ENV'."
+
+# =============================================================================
+# DESTROY OPCIONAL — Solo disponible en entorno dev
+# =============================================================================
+
+if [ "$ENV" = "dev" ]; then
+  echo ""
+  read -p "¿Quieres hacer un terraform destroy del entorno dev? (destroy/no): " DESTROY
+  if [ "$DESTROY" = "destroy" ]; then
+    echo ""
+    echo ">>> Ejecutando terraform destroy para el entorno 'dev'..."
+    cd envs/dev
+    terraform destroy
+    cd ../..
+    echo ""
+    echo "Destroy completado."
+  else
+    echo "Destroy cancelado."
+  fi
+fi
