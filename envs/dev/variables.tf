@@ -13,3 +13,8 @@ variable "environment" {
   description = "El nombre del entorno (sandbox, dev, prod...)"
   default     = "dev" # Le ponemos un valor por defecto seguro
 }
+
+variable "app_name" {
+  type        = string
+  description = "El nombre base de la aplicación o proyecto"
+}

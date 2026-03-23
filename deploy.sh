@@ -2,6 +2,12 @@
 set -e  # Detener el script si cualquier comando falla
 
 # =============================================================================
+# CONFIGURACIÓN — definición del nombre de la aplicación (Single Source of Truth)
+# =============================================================================
+
+APP_NAME="air-quality"
+
+# =============================================================================
 # SELECCIÓN DE ENTORNO
 # =============================================================================
 
@@ -31,7 +37,8 @@ fi
 
 PROJECT_ID=$(gcloud config get-value project)
 REGION=$(gcloud config get-value compute/region)
-REPO="$REGION-docker.pkg.dev/$PROJECT_ID/air-quality"
+REPO="$REGION-docker.pkg.dev/$PROJECT_ID/$APP_NAME-$ENV"
+
 
 echo ""
 echo "Entorno  : $ENV"
@@ -52,9 +59,10 @@ fi
 # =============================================================================
 
 cat > envs/$ENV/terraform.tfvars <<EOF
-project_id = "$PROJECT_ID"
-region     = "$REGION"
+project_id      = "$PROJECT_ID"
+region          = "$REGION"
 environment     = "$ENV"
+app_name        = "$APP_NAME"
 EOF
 
 echo "terraform.tfvars generado en envs/$ENV/."
@@ -65,7 +73,10 @@ echo "terraform.tfvars generado en envs/$ENV/."
 
 echo ""
 echo ">>> FASE 0: Activando APIs de GCP..."
-gcloud services enable bigquery.googleapis.com --project=$PROJECT_ID
+gcloud services enable \
+        bigquery.googleapis.com \
+        artifactregistry.googleapis.com \
+        --project=$PROJECT_ID
 
 # =============================================================================
 # FASE 1 — Terraform apply

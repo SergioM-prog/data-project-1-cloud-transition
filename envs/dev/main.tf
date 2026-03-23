@@ -18,10 +18,10 @@ module "bigquery" {
       table_id    = "valencia_air"
       schema_path = "${path.module}/schemas/valencia_air.json"
     },
-    {
-      table_id    = "valencia_air2"
-      schema_path = "${path.module}/schemas/valencia_air.json"
-    }
+    # {
+    #   table_id    = "valencia_air2"
+    #   schema_path = "${path.module}/schemas/valencia_air.json"
+    # }
   ]
 }
 
@@ -32,7 +32,7 @@ module "bigquery" {
 # Llamada 1: Creamos el Data Lake (Raw)
 module "raw_bucket" {
   source                     = "../../modules/gcs"
-  bucket_name                = "${var.project_id}-air-quality-raw-${var.environment}"
+  bucket_name                = "${var.project_id}-${var.app_name}-raw-${var.environment}"
   region                     = var.region
   enable_deletion_protection = false # Estamos en dev, queremos poder borrarlo
 }
@@ -40,7 +40,7 @@ module "raw_bucket" {
 # Llamada 2: Creamos el Bucket Temporal (Dataflow)
 module "temp_bucket" {
   source                     = "../../modules/gcs"
-  bucket_name                = "${var.project_id}-air-quality-temp-${var.environment}"
+  bucket_name                = "${var.project_id}-${var.app_name}-temp-${var.environment}"
   region                     = var.region
   enable_deletion_protection = false # Estamos en dev, queremos poder borrarlo
 }
@@ -65,4 +65,16 @@ resource "google_storage_bucket_iam_member" "ingestion_raw_access" {
   bucket = module.raw_bucket.bucket_name
   role   = "roles/storage.objectCreator"
   member = "serviceAccount:${module.ingestion_sa.email}"
+}
+
+# =============================================================================
+# 5. CONTAINERS (Artifact Registry)
+# =============================================================================
+
+# Creamos el repositorio para las imágenes Docker de Cloud Run
+module "artifact_registry" {
+  source        = "../../modules/artifact_registry"
+  repository_id = "${var.app_name}-${var.environment}"
+  region        = var.region
+  description   = "Repositorio Docker para las imágenes del pipeline de Air Quality en ${var.environment}"
 }
