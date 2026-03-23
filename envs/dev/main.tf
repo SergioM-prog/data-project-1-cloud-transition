@@ -6,8 +6,19 @@
 module "bigquery" {
   source = "../../modules/bigquery"
   region = var.region
-  environment                = "dev"
   enable_deletion_protection = false  # Permite terraform destroy limpio
+  dataset_id                 = "air_quality_dataset_${var.environment}"
+  # Le pasamos la lista de tablas que queremos crear en este dataset
+  tables = [
+    {
+      table_id    = "valencia_air"
+      schema_path = "${path.module}/schemas/valencia_air.json"
+    },
+    {
+      table_id    = "valencia_air2"
+      schema_path = "${path.module}/schemas/valencia_air.json"
+    }
+  ]
 }
 
 # Llamada 1: Creamos el Data Lake (Raw)
