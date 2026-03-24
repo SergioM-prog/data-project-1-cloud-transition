@@ -24,3 +24,9 @@ variable "valencia_api_url" {
   type        = string
   default     = "https://valencia.opendatasoft.com/api/explore/v2.1/catalog/datasets/estacions-contaminacio-atmosferiques-estaciones-contaminacion-atmosfericas/records?limit=20" 
 }
+
+variable "schedule" {
+  description = "Frecuencia de ejecución del job de ingesta"
+  type        = string
+  default     = "*/30 * * * *" # Cada 30 minutos por defecto
+}
