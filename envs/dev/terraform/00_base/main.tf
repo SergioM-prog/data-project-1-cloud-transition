@@ -8,7 +8,7 @@
 # =============================================================================
 
 module "bigquery" {
-  source = "../../modules/bigquery"
+  source = "../../../../modules/bigquery"
   region = var.region
   enable_deletion_protection = false  # Permite terraform destroy limpio
   dataset_id                 = "air_quality_dataset_${var.environment}"
@@ -16,7 +16,7 @@ module "bigquery" {
   tables = [
     {
       table_id    = "valencia_air"
-      schema_path = "${path.module}/schemas/valencia_air.json"
+      schema_path = "${path.module}/../../schemas/valencia_air.json"
     },
     # {
     #   table_id    = "valencia_air2"
@@ -31,7 +31,7 @@ module "bigquery" {
 
 # Llamada 1: Creamos el Data Lake (Raw)
 module "raw_bucket" {
-  source                     = "../../modules/gcs"
+  source                     = "../../../../modules/gcs"
   bucket_name                = "${var.project_id}-${var.app_name}-raw-${var.environment}"
   region                     = var.region
   enable_deletion_protection = false # Estamos en dev, queremos poder borrarlo
@@ -39,7 +39,7 @@ module "raw_bucket" {
 
 # Llamada 2: Creamos el Bucket Temporal (Dataflow)
 module "temp_bucket" {
-  source                     = "../../modules/gcs"
+  source                     = "../../../../modules/gcs"
   bucket_name                = "${var.project_id}-${var.app_name}-temp-${var.environment}"
   region                     = var.region
   enable_deletion_protection = false # Estamos en dev, queremos poder borrarlo
@@ -51,7 +51,7 @@ module "temp_bucket" {
 
 # Creamos la service account de ingestión
 module "ingestion_sa" {
-  source                     = "../../modules/service_account"
+  source                     = "../../../../modules/service_account"
   account_id                 = "sa-ingestion-${var.environment}"
   display_name               = "Service Account para Script de Ingestion"
 }
@@ -73,7 +73,7 @@ resource "google_storage_bucket_iam_member" "ingestion_raw_access" {
 
 # Creamos el repositorio para las imágenes Docker de Cloud Run
 module "artifact_registry" {
-  source        = "../../modules/artifact_registry"
+  source        = "../../../../modules/artifact_registry"
   repository_id = "${var.app_name}-${var.environment}"
   region        = var.region
   description   = "Repositorio Docker para las imágenes del pipeline de Air Quality en ${var.environment}"

@@ -58,14 +58,14 @@ fi
 # GENERAR terraform.tfvars dinámicamente en el entorno elegido
 # =============================================================================
 
-cat > envs/$ENV/terraform.tfvars <<EOF
+cat > envs/$ENV/terraform/00_base/terraform.tfvars <<EOF
 project_id      = "$PROJECT_ID"
 region          = "$REGION"
 environment     = "$ENV"
 app_name        = "$APP_NAME"
 EOF
 
-echo "terraform.tfvars generado en envs/$ENV/."
+echo "terraform.tfvars generado en envs/$ENV/terraform/00_base."
 
 # =============================================================================
 # FASE 0 — Activar APIs de GCP necesarias (idempotente)
@@ -86,7 +86,7 @@ gcloud services enable \
 echo ""
 echo ">>> FASE 1: Desplegando infraestructura base para el entorno '$ENV'..."
 # Navegamos a la carpeta del entorno que ha elegido el usuario
-cd envs/$ENV
+cd envs/$ENV/terraform/00_base
 
 terraform init -upgrade
 
@@ -102,8 +102,8 @@ echo "✅ Terraform validado correctamente."
 terraform plan -out=main.tfplan
 terraform apply main.tfplan
 
-# Volvemos a la raíz (subimos dos niveles)
-cd ../..
+# Volvemos a la raíz (subimos cuatro niveles)
+cd ../../../..
 
 echo ""
 echo "Fase 1 completada. Infraestructura base lista para el entorno '$ENV'."
@@ -153,9 +153,9 @@ if [ "$ENV" = "dev" ]; then
   if [ "$DESTROY" = "destroy" ]; then
     echo ""
     echo ">>> Ejecutando terraform destroy para el entorno 'dev'..."
-    cd envs/dev
+    cd envs/dev/terraform/00_base
     terraform destroy
-    cd ../..
+    cd ../../../..
     echo ""
     echo "Destroy completado."
   else
