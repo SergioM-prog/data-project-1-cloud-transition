@@ -80,6 +80,7 @@ gcloud services enable \
         artifactregistry.googleapis.com \
         run.googleapis.com \
         cloudscheduler.googleapis.com \
+        dataflow.googleapis.com \
         --project=$PROJECT_ID
 
 

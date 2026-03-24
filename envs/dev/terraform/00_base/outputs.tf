@@ -26,3 +26,8 @@ output "bq_dataset_id" {
   description = "ID del dataset de BigQuery"
   value       = module.bigquery.dataset_id
 }
+
+output "dataflow_sa_email" {
+  description = "Email de la Service Account que ejecuta Dataflow"
+  value       = module.dataflow_sa.email
+}

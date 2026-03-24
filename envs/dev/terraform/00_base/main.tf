@@ -46,8 +46,10 @@ module "temp_bucket" {
 }
 
 # =============================================================================
-# 3. IDENTITY (Service Accounts)
+# 3. INGESTION: IDENTIDAD Y PERMISOS
 # =============================================================================
+
+#------------Service Account----------
 
 # Creamos la service account de ingestión
 module "ingestion_sa" {
@@ -56,16 +58,7 @@ module "ingestion_sa" {
   display_name               = "Service Account para Script de Ingestion"
 }
 
-# Creamos la service account de scheduler
-module "scheduler_sa" {
-  source       = "../../../../modules/service_account"
-  account_id   = "sa-scheduler-${var.environment}"
-  display_name = "Cloud Scheduler SA para entorno ${var.environment}"
-}
-
-# =============================================================================
-# 4. ACCESS MANAGEMENT (IAM Bindings)
-# =============================================================================
+#------------Permisos------------------
 
 # Asignamos permisos a la sa-ingestion sólo de escritura en el bucket siguiendo el principio de mínimo privilegio
 resource "google_storage_bucket_iam_member" "ingestion_raw_access" {
@@ -73,6 +66,22 @@ resource "google_storage_bucket_iam_member" "ingestion_raw_access" {
   role   = "roles/storage.objectCreator"
   member = "serviceAccount:${module.ingestion_sa.email}"
 }
+
+
+# =============================================================================
+# 4. SCHEDULER: IDENTIDAD Y PERMISOS
+# =============================================================================
+
+#------------Service Account----------
+
+# Creamos la service account de scheduler
+module "scheduler_sa" {
+  source       = "../../../../modules/service_account"
+  account_id   = "sa-scheduler-${var.environment}"
+  display_name = "Cloud Scheduler SA para entorno ${var.environment}"
+}
+
+#------------Permisos------------------
 
 # Permisos a scheduler_sa para poder hacer la llamada HTTP para despertar al Cloud Run Job
 resource "google_project_iam_member" "scheduler_run_invoker" {
@@ -88,6 +97,61 @@ resource "google_project_iam_member" "scheduler_sa_user" {
   member  = "serviceAccount:${module.scheduler_sa.email}"
 }
 
+# Le damos permiso al Scheduler para que pueda lanzar Jobs de Dataflow
+resource "google_project_iam_member" "scheduler_dataflow_admin" {
+  project = var.project_id
+  role    = "roles/dataflow.admin"
+  member  = "serviceAccount:${module.scheduler_sa.email}"
+}
+
+# =============================================================================
+# DATAFLOW: IDENTIDAD Y PERMISOS (El Analista)
+# =============================================================================
+
+#------------Service Account----------
+
+# 1. Creamos la Service Account de Dataflow
+module "dataflow_sa" {
+  source       = "../../../../modules/service_account"
+  account_id   = "sa-dataflow-${var.environment}"
+  display_name = "Service Account para ejecución de Dataflow"
+}
+
+#------------Permisos------------------
+
+# 2. Permiso core para que Dataflow levante los workers
+resource "google_project_iam_member" "dataflow_worker" {
+  project = var.project_id
+  role    = "roles/dataflow.worker"
+  member  = "serviceAccount:${module.dataflow_sa.email}"
+}
+
+# 3. Permiso para leer los archivos del bucket RAW (Lectura)
+resource "google_storage_bucket_iam_member" "dataflow_raw_viewer" {
+  bucket = module.raw_bucket.bucket_name
+  role   = "roles/storage.objectViewer"
+  member = "serviceAccount:${module.dataflow_sa.email}"
+}
+
+# 4. Permiso para usar el bucket TEMP (Admin)
+resource "google_storage_bucket_iam_member" "dataflow_temp_admin" {
+  bucket = module.temp_bucket.bucket_name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${module.dataflow_sa.email}"
+}
+
+# 5. Permisos para que Dataflow pueda crear trabajos en BigQuery y escribir datos
+resource "google_project_iam_member" "dataflow_bq_job_user" {
+  project = var.project_id
+  role    = "roles/bigquery.jobUser"
+  member  = "serviceAccount:${module.dataflow_sa.email}"
+}
+
+resource "google_bigquery_dataset_iam_member" "dataflow_bq_data_editor" {
+  dataset_id = module.bigquery.dataset_id
+  role       = "roles/bigquery.dataEditor"
+  member     = "serviceAccount:${module.dataflow_sa.email}"
+}
 
 # =============================================================================
 # 5. CONTAINERS (Artifact Registry)
