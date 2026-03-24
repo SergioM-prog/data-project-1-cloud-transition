@@ -56,6 +56,13 @@ module "ingestion_sa" {
   display_name               = "Service Account para Script de Ingestion"
 }
 
+# Creamos la service account de scheduler
+module "scheduler_sa" {
+  source       = "../../../../modules/service_account"
+  account_id   = "sa-scheduler-${var.environment}"
+  display_name = "Cloud Scheduler SA para entorno ${var.environment}"
+}
+
 # =============================================================================
 # 4. ACCESS MANAGEMENT (IAM Bindings)
 # =============================================================================
@@ -66,6 +73,21 @@ resource "google_storage_bucket_iam_member" "ingestion_raw_access" {
   role   = "roles/storage.objectCreator"
   member = "serviceAccount:${module.ingestion_sa.email}"
 }
+
+# Permisos a scheduler_sa para poder hacer la llamada HTTP para despertar al Cloud Run Job
+resource "google_project_iam_member" "scheduler_run_invoker" {
+  project = var.project_id
+  role    = "roles/run.invoker"
+  member  = "serviceAccount:${module.scheduler_sa.email}"
+}
+
+# Permisos a scheduler_sa para poner inyectar las sa a los jobs
+resource "google_project_iam_member" "scheduler_sa_user" {
+  project = var.project_id
+  role    = "roles/iam.serviceAccountUser"
+  member  = "serviceAccount:${module.scheduler_sa.email}"
+}
+
 
 # =============================================================================
 # 5. CONTAINERS (Artifact Registry)

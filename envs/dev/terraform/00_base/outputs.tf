@@ -17,6 +17,11 @@ output "ingestion_sa_email" {
   value       = module.ingestion_sa.email
 }
 
+output "scheduler_sa_email" {
+  description = "Email de la Service Account que ejecuta el Job de ingestion"
+  value       = module.scheduler_sa.email
+}
+
 output "bq_dataset_id" {
   description = "ID del dataset de BigQuery"
   value       = module.bigquery.dataset_id
