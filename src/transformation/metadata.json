@@ -1,0 +1,18 @@
+{
+  "name": "Air Quality Transformation",
+  "description": "Pipeline de Apache Beam para mover datos de GCS a BigQuery",
+  "parameters": [
+    {
+      "name": "input",
+      "label": "Ruta de entrada en GCS",
+      "helpText": "Patrón de archivos JSON, ej: gs://bucket/raw/Valencia/2026/*",
+      "isOptional": false
+    },
+    {
+      "name": "output",
+      "label": "Tabla de destino en BigQuery",
+      "helpText": "Formato: proyecto:dataset.tabla",
+      "isOptional": false
+    }
+  ]
+}

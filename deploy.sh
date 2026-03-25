@@ -132,18 +132,36 @@ echo "✅ Docker está listo."
 # Autenticar la terminal de Docker con Google Cloud
 gcloud auth configure-docker $REGION-docker.pkg.dev --quiet
 
-# Definir la URL completa de la imagen
-IMAGE_URL="$REPO/ingestion:latest"
+# --- VARIABLES PARA DATAFLOW ---
+IMAGE_URL_INGESTION="$REPO/ingestion:latest"
+IMAGE_URL_TRANSFORM="$REPO/transformation:latest"
+TEMPLATE_PATH="gs://$PROJECT_ID-$APP_NAME-temp-$ENV/templates/air-quality.json"
 
-# Construir la imagen leyendo el Dockerfile de la carpeta src/ingestion
-echo "-> Empaquetando código local..."
-docker build -t $IMAGE_URL ./src/ingestion
+# 1. Imagen de Ingestión (Cloud Run)
+echo "-> Construyendo imagen de INGESTIÓN..."
+docker build -t $IMAGE_URL_INGESTION ./src/ingestion
+docker push $IMAGE_URL_INGESTION
 
-# 4. Subir la imagen al repositorio
-echo "-> Subiendo imagen a GCP ($IMAGE_URL)..."
-docker push $IMAGE_URL
+# 2. Imagen de Transformación (Dataflow)
+echo "-> Construyendo imagen de TRANSFORMACIÓN..."
+docker build -t $IMAGE_URL_TRANSFORM ./src/transformation
+docker push $IMAGE_URL_TRANSFORM
 
-echo "✅ Imagen subida con éxito!"
+echo "✅ Imagenes subidas con éxito!"
+
+# =============================================================================
+# FASE 2.5 — Construcción de la Flex Template de Dataflow - NUEVO
+# =============================================================================
+echo ""
+echo ">>> FASE 2.5: Registrando Flex Template en Cloud Storage..."
+
+gcloud dataflow flex-template build "$TEMPLATE_PATH" \
+    --image "$IMAGE_URL_TRANSFORM" \
+    --sdk-language "PYTHON" \
+    --metadata-file "src/transformation/metadata.json" \
+    --project="$PROJECT_ID"
+
+echo "✅ Plantilla Dataflow generada en: $TEMPLATE_PATH"
 
 echo ""
 echo "Fase 2 completada. Imágenes Docker subidas a Artifact y lista para el entorno '$ENV'."
