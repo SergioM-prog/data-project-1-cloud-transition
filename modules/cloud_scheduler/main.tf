@@ -7,17 +7,21 @@ resource "google_cloud_scheduler_job" "scheduler" {
   description = var.description
   schedule    = var.schedule
   time_zone   = var.time_zone
-  region      = var.region
   project     = var.project_id
+  region      = var.region
 
   http_target {
     http_method = var.http_method
     uri         = var.uri
+    body        = var.body
 
-    # Autenticación: El Scheduler usa una Service Account para identificarse 
-    # ante el servicio de destino (ej. Cloud Run) y demostrar que tiene permiso.
-    oauth_token {
-      service_account_email = var.service_account_email
+    # Bloque dinámico: Solo se crea si enviamos un email
+    dynamic "oauth_token" {
+      for_each = var.service_account_email != "" ? [1] : []
+      content {
+        service_account_email = var.service_account_email
+        scope                 = var.oauth_scope
+      }
     }
   }
 }

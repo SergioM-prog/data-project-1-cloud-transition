@@ -3,6 +3,10 @@
 # Llama a los módulos pasándoles las variables necesarias.
 # =============================================================================
 
+# Necesario para obtener el número de proyecto (project_number),
+# que usa el agente de servicio de Cloud Scheduler
+data "google_project" "project" {}
+
 # =============================================================================
 # 1. DATA WAREHOUSE (BigQuery)
 # =============================================================================
@@ -104,6 +108,14 @@ resource "google_project_iam_member" "scheduler_dataflow_admin" {
   member  = "serviceAccount:${module.scheduler_sa.email}"
 }
 
+# Permite al agente de servicio de Cloud Scheduler generar tokens OAuth
+# en nombre de sa-scheduler. Sin esto, las llamadas HTTP salen sin token → 401.
+resource "google_service_account_iam_member" "scheduler_token_creator" {
+  service_account_id = "projects/${var.project_id}/serviceAccounts/${module.scheduler_sa.email}"
+  role               = "roles/iam.serviceAccountTokenCreator"
+  member             = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-cloudscheduler.iam.gserviceaccount.com"
+}
+
 # =============================================================================
 # DATAFLOW: IDENTIDAD Y PERMISOS (El Analista)
 # =============================================================================
@@ -151,6 +163,13 @@ resource "google_bigquery_dataset_iam_member" "dataflow_bq_data_editor" {
   dataset_id = module.bigquery.dataset_id
   role       = "roles/bigquery.dataEditor"
   member     = "serviceAccount:${module.dataflow_sa.email}"
+}
+
+# Permiso para que Dataflow pueda descargar la imagen Docker desde Artifact Registry
+resource "google_project_iam_member" "dataflow_ar_reader" {
+  project = var.project_id
+  role    = "roles/artifactregistry.reader"
+  member  = "serviceAccount:${module.dataflow_sa.email}"
 }
 
 # =============================================================================

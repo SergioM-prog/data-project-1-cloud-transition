@@ -41,11 +41,59 @@ module "ingestion_trigger" {
 
   project_id  = var.project_id
   region      = var.region
-  name        = "${var.app_name}-trigger-${var.environment}"
+  name        = "air-quality-trigger-${var.environment}"
   description = "Despierta la ingesta de datos de Valencia"
-  schedule    = var.schedule
-  uri         = "https://${var.region}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${var.project_id}/jobs/${module.ingestion_job.job_name}:run"
+  schedule    = "*/30 * * * *"
+  
+  uri         = "https://${var.region}-run.googleapis.com/v2/projects/${var.project_id}/locations/${var.region}/jobs/air-quality-ingestion-${var.environment}:run"
+  
+  # Le pasamos los parámetros opcionales
+  body                  = base64encode(jsonencode({}))
+  service_account_email = data.terraform_remote_state.base.outputs.scheduler_sa_email
+}
 
-  # EL CAPATAZ: Esta cuenta es la que hace la llamada HTTP para despertar al Job
+
+# -----------------------------------------------------------------------------
+# 1. EL "PROXY"
+# -----------------------------------------------------------------------------
+resource "google_cloud_run_v2_job" "dataflow_launcher" {
+  name     = "air-quality-dataflow-launcher-${var.environment}"
+  location = var.region
+  project  = var.project_id
+  deletion_protection = false
+
+  template {
+    template {
+      # Usa la cuenta de Scheduler, que ya tiene permisos de administrador de Dataflow
+      service_account = data.terraform_remote_state.base.outputs.scheduler_sa_email
+      
+      containers {
+        image = "gcr.io/google.com/cloudsdktool/cloud-sdk:slim"
+        command = ["/bin/bash", "-c"]
+        
+        # UNA SOLA LÍNEA SIN SALTOS. Sino da error el job de dataflow porque ejecuta los comandos uno a uno si están en diferentes filas
+        args = ["gcloud dataflow flex-template run \"air-quality-batch-$(date +%s)\" --template-file-gcs-location=\"gs://${var.project_id}-${var.app_name}-temp-${var.environment}/templates/air-quality.json\" --region=\"${var.region}\" --service-account-email=\"${data.terraform_remote_state.base.outputs.dataflow_sa_email}\" --staging-location=\"gs://${var.project_id}-${var.app_name}-temp-${var.environment}/staging\" --parameters=\"input=gs://${var.project_id}-${var.app_name}-raw-${var.environment}/raw/Valencia,output=${var.project_id}:air_quality_dataset_${var.environment}.valencia_air,temp_location=gs://${var.project_id}-${var.app_name}-temp-${var.environment}/staging\""]      
+        }
+    }
+  }
+}
+
+# -----------------------------------------------------------------------------
+# 2. EL DESPERTADOR (Llama al Proxy a las y 45)
+# -----------------------------------------------------------------------------
+module "dataflow_trigger" {
+  source = "../../../../modules/cloud_scheduler"
+
+  project_id  = var.project_id
+  region      = var.region
+  name        = "air-quality-dataflow-trigger-${var.environment}"
+  description = "Despierta el Cloud Run que ejecuta el comando gcloud de Dataflow"
+  schedule    = "45 * * * *"
+  
+  # Llamamos a Cloud Run en lugar de a Dataflow directamente
+  uri         = "https://${var.region}-run.googleapis.com/v2/projects/${var.project_id}/locations/${var.region}/jobs/air-quality-dataflow-launcher-${var.environment}:run"
+  
+  # Parámetros opcionales que el módulo ahora acepta
+  body                  = base64encode(jsonencode({}))
   service_account_email = data.terraform_remote_state.base.outputs.scheduler_sa_email
 }

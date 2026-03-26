@@ -1,7 +1,7 @@
 import os
 import sys
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 from google.cloud import storage
 import requests
@@ -44,7 +44,7 @@ def main():
     try:
         # Ruta particionada estilo Hive: raw/ciudad/YYYY/MM/DD/HH/archivo.json
         # Permite a Dataflow leer incrementalmente solo la carpeta de la hora anterior
-        now = datetime.now(ZoneInfo("Europe/Madrid"))
+        now = datetime.now(timezone.utc)
         filename = f"raw/{city}/{now.strftime('%Y/%m/%d/%H')}/{city}_{now.strftime('%Y%m%d_%H%M%S')}.json"
 
         print(f">> Subiendo datos a GCS: gs://{bucket_name}/{filename} ...")

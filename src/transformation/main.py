@@ -1,6 +1,7 @@
 import logging
 import json
 import argparse
+import datetime # <-- NUEVO: Para calcular la fecha/hora en ejecución
 import apache_beam as beam
 from apache_beam.options.pipeline_options import PipelineOptions
 
@@ -11,7 +12,6 @@ class ProcessAirData(beam.DoFn):
     def process(self, element):
         try:
             # El elemento es un string (una línea del archivo o el archivo entero)
-            # Como tu JSON es una lista [{}, {}], lo cargamos
             data = json.loads(element)
             
             # Si el JSON es una lista, iteramos sobre cada registro
@@ -37,17 +37,29 @@ class ProcessAirData(beam.DoFn):
 
 def run():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--input', required=True, help='Ruta del bucket GCS: gs://bucket/file.json')
+    # 'input' recibirá solo la ruta base: gs://bucket/Valencia
+    parser.add_argument('--input', required=True, help='Ruta base del bucket GCS: gs://bucket/carpeta')
     parser.add_argument('--output', required=True, help='Tabla BQ: proyecto:dataset.tabla')
     parser.add_argument('--temp_location', required=True, help='Ruta temporal GCS para Dataflow')
     
     args, pipeline_args = parser.parse_known_args()
+    pipeline_args.extend(['--temp_location', args.temp_location])
     options = PipelineOptions(pipeline_args)
+
+    # Calculamos la hora UTC actual (el momento exacto en el que arranca Dataflow)
+    now = datetime.datetime.utcnow()
+    
+    # Quitamos la barra final del input por seguridad y construimos la ruta completa
+    base_path = args.input.rstrip('/')
+    dynamic_input_path = f"{base_path}/{now.strftime('%Y/%m/%d/%H')}/*.json"
+    
+    logging.info(f"Buscando archivos en la ruta dinámica: {dynamic_input_path}")
+    # ---------------------------------------
 
     with beam.Pipeline(options=options) as p:
         (
             p
-            | "Leer de GCS" >> beam.io.ReadFromText(args.input)
+            | "Leer de GCS" >> beam.io.ReadFromText(dynamic_input_path) # Usamos la ruta dinámica
             | "Parsear y Limpiar" >> beam.ParDo(ProcessAirData())
             | "Escribir en BigQuery" >> beam.io.WriteToBigQuery(
                 args.output,
