@@ -64,4 +64,3 @@ detailed_measurements as (
 )
 
 select * from detailed_measurements
-order by fecha_hora_medicion desc

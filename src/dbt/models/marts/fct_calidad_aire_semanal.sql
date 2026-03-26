@@ -60,4 +60,3 @@ weekly_aggregates as (
 )
 
 select * from weekly_aggregates
-order by inicio_semana desc, nombre_estacion

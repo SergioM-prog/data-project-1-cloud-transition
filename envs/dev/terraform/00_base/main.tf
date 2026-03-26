@@ -215,7 +215,7 @@ module "dbt_sa" {
 # Ejecutar consultas en BigQuery (requerido para cualquier operación dbt)
 resource "google_project_iam_member" "dbt_bq_job_user" {
   project = var.project_id
-  role    = "roles/bigquery.jobUser"
+  role    = "roles/bigquery.user"
   member  = "serviceAccount:${module.dbt_sa.email}"
 }
 

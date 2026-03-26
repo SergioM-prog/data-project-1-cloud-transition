@@ -44,4 +44,3 @@ hourly_aggregates as (
 )
 
 select * from hourly_aggregates
-order by fecha_hora desc, ciudad

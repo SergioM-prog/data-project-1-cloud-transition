@@ -42,4 +42,3 @@ daily_aggregates as (
 )
 
 select * from daily_aggregates
-order by fecha_medicion desc, ciudad
