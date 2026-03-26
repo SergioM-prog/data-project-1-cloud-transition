@@ -179,3 +179,63 @@ module "artifact_registry" {
   region        = var.region
   description   = "Repositorio Docker para las imágenes del pipeline de Air Quality en ${var.environment}"
 }
+
+# =============================================================================
+# 6. DBT: DATASETS (Arquitectura Medallón)
+# =============================================================================
+
+# Dataset Silver — vistas de staging gestionadas por dbt
+resource "google_bigquery_dataset" "silver" {
+  dataset_id                 = "air_quality_silver_${var.environment}"
+  location                   = var.region
+  delete_contents_on_destroy = true
+}
+
+# Dataset Gold — tablas de marts gestionadas por dbt
+resource "google_bigquery_dataset" "gold" {
+  dataset_id                 = "air_quality_gold_${var.environment}"
+  location                   = var.region
+  delete_contents_on_destroy = true
+}
+
+# =============================================================================
+# 7. DBT: IDENTIDAD Y PERMISOS
+# =============================================================================
+
+#------------Service Account----------
+
+module "dbt_sa" {
+  source       = "../../../../modules/service_account"
+  account_id   = "sa-dbt-${var.environment}"
+  display_name = "Service Account para ejecución de dbt"
+}
+
+#------------Permisos------------------
+
+# Ejecutar consultas en BigQuery (requerido para cualquier operación dbt)
+resource "google_project_iam_member" "dbt_bq_job_user" {
+  project = var.project_id
+  role    = "roles/bigquery.jobUser"
+  member  = "serviceAccount:${module.dbt_sa.email}"
+}
+
+# Leer datos del dataset Bronze (fuente: tabla valencia_air escrita por Dataflow)
+resource "google_bigquery_dataset_iam_member" "dbt_bronze_viewer" {
+  dataset_id = module.bigquery.dataset_id
+  role       = "roles/bigquery.dataViewer"
+  member     = "serviceAccount:${module.dbt_sa.email}"
+}
+
+# Crear y actualizar vistas en Silver (capa staging)
+resource "google_bigquery_dataset_iam_member" "dbt_silver_editor" {
+  dataset_id = google_bigquery_dataset.silver.dataset_id
+  role       = "roles/bigquery.dataEditor"
+  member     = "serviceAccount:${module.dbt_sa.email}"
+}
+
+# Crear y actualizar tablas en Gold (capa marts)
+resource "google_bigquery_dataset_iam_member" "dbt_gold_editor" {
+  dataset_id = google_bigquery_dataset.gold.dataset_id
+  role       = "roles/bigquery.dataEditor"
+  member     = "serviceAccount:${module.dbt_sa.email}"
+}

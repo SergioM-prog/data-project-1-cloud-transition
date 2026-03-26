@@ -31,3 +31,18 @@ output "dataflow_sa_email" {
   description = "Email de la Service Account que ejecuta Dataflow"
   value       = module.dataflow_sa.email
 }
+
+output "dbt_sa_email" {
+  description = "Email de la Service Account que ejecuta dbt"
+  value       = module.dbt_sa.email
+}
+
+output "silver_dataset_id" {
+  description = "ID del dataset Silver (staging dbt)"
+  value       = google_bigquery_dataset.silver.dataset_id
+}
+
+output "gold_dataset_id" {
+  description = "ID del dataset Gold (marts dbt)"
+  value       = google_bigquery_dataset.gold.dataset_id
+}
