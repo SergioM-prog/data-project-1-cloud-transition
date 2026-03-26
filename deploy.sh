@@ -132,9 +132,10 @@ echo "✅ Docker está listo."
 # Autenticar la terminal de Docker con Google Cloud
 gcloud auth configure-docker $REGION-docker.pkg.dev --quiet
 
-# --- VARIABLES PARA DATAFLOW ---
+# --- VARIABLES DE IMÁGENES ---
 IMAGE_URL_INGESTION="$REPO/ingestion:latest"
 IMAGE_URL_TRANSFORM="$REPO/transformation:latest"
+IMAGE_URL_DBT="$REPO/dbt:latest"
 TEMPLATE_PATH="gs://$PROJECT_ID-$APP_NAME-temp-$ENV/templates/air-quality.json"
 
 # 1. Imagen de Ingestión (Cloud Run)
@@ -146,6 +147,11 @@ docker push $IMAGE_URL_INGESTION
 echo "-> Construyendo imagen de TRANSFORMACIÓN..."
 docker build -t $IMAGE_URL_TRANSFORM ./src/transformation
 docker push $IMAGE_URL_TRANSFORM
+
+# 3. Imagen de dbt (Cloud Run Job)
+echo "-> Construyendo imagen de DBT..."
+docker build -t $IMAGE_URL_DBT ./src/dbt
+docker push $IMAGE_URL_DBT
 
 echo "✅ Imagenes subidas con éxito!"
 
