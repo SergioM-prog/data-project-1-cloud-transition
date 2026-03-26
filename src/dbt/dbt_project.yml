@@ -1,0 +1,25 @@
+name: 'air_quality_dbt'
+version: '1.0.0'
+profile: 'air_quality_dbt'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  air_quality_dbt:
+    staging:
+      +materialized: view
+      +tags: ["staging"]
+      +schema: "silver"
+    marts:
+      +materialized: incremental
+      +tags: ["marts"]
+      +schema: "gold"

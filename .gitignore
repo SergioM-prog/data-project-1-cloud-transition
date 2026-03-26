@@ -1,1 +1,35 @@
+# =============================================================================
+# ARCHIVOS SENSIBLES — nunca subir al repositorio
+# =============================================================================
+
+# Valores reales del proyecto (project_id, region, etc.) — generados por deploy.sh
+envs/**/terraform.tfvars
+envs/**/*.tfvars
+
+# Estado de Terraform: contiene el estado real de TODOS los recursos,
+# incluyendo valores de secretos de Secret Manager en texto plano.
+envs/**/*.tfstate
+envs/**/*.tfstate.backup
+envs/**/*.tfstate.lock.info
+
+# Directorio de trabajo de Terraform (plugins descargados, módulos, etc.)
+# Se regenera con 'terraform init', no necesita estar en el repo.
+envs/**/.terraform/
+
+# Planes guardados — pueden contener valores sensibles expandidos
+envs/**/*.tfplan
+
+# El lock file SÍ debe subirse al repo (garantiza versiones reproducibles)
+!**/.terraform.lock.hcl
+
+# Archivo de variables de entorno local
 .env
+
+# Planes de terraform guardados
+*.tfplan
+
+# dbt
+src/dbt/target/
+src/dbt/dbt_packages/
+src/dbt/logs/
+src/dbt/dbt_internal_packages/

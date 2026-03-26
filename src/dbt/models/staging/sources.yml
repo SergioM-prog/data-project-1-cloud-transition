@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: air_quality
+    database: "{{ env_var('DBT_PROJECT_ID') }}"
+    schema: "air_quality_bronze_{{ env_var('DBT_ENV', 'dev') }}"
+    tables:
+      - name: valencia_air
