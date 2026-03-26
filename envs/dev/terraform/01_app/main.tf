@@ -77,6 +77,50 @@ resource "google_cloud_run_v2_job" "dataflow_launcher" {
     }
   }
 }
+# =============================================================================
+# 3. DBT: CLOUD RUN JOB
+# =============================================================================
+
+module "dbt_runner" {
+  source = "../../../../modules/cloud_run_job"
+
+  project_id                 = var.project_id
+  region                     = var.region
+  job_name                   = "${var.app_name}-dbt-runner-${var.environment}"
+  enable_deletion_protection = false
+
+  # Imagen en el AR existente; se pisará con dbt:latest en el deploy.sh
+  image_url = "${var.region}-docker.pkg.dev/${var.project_id}/${var.app_name}-${var.environment}/dbt:latest"
+
+  # SA creada en el Bloque 1, con permisos sobre los datasets silver y gold
+  service_account_email = data.terraform_remote_state.base.outputs.dbt_sa_email
+
+  # Variables que el entrypoint del contenedor de dbt necesitará
+  env_vars = {
+    DBT_PROJECT_ID = var.project_id
+    DBT_ENV        = var.environment
+  }
+}
+
+# =============================================================================
+# 4. DBT: SCHEDULER
+# =============================================================================
+
+module "dbt_trigger" {
+  source = "../../../../modules/cloud_scheduler"
+
+  project_id  = var.project_id
+  region      = var.region
+  name        = "${var.app_name}-dbt-trigger-${var.environment}"
+  description = "Ejecuta dbt cada hora para transformar los datos de calidad del aire"
+  schedule    = "0 * * * *"
+
+  # La ingesta termina a las y45; dbt arranca a la hora en punto (margen de 15 min)
+  uri = "https://${var.region}-run.googleapis.com/v2/projects/${var.project_id}/locations/${var.region}/jobs/${var.app_name}-dbt-runner-${var.environment}:run"
+
+  body                  = base64encode(jsonencode({}))
+  service_account_email = data.terraform_remote_state.base.outputs.scheduler_sa_email
+}
 
 # -----------------------------------------------------------------------------
 # 2. EL DESPERTADOR (Llama al Proxy a las y 45)
