@@ -1,0 +1,106 @@
+version: 2
+
+models:
+  - name: fct_air_quality_daily
+    description: "Promedios y picos diarios de calidad del aire por estación y ciudad."
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - fecha_medicion
+            - id_estacion
+            - ciudad
+    columns:
+      - name: fecha_medicion
+        description: "Fecha de la medición (granularidad diaria)"
+        data_tests:
+          - not_null
+      - name: ciudad
+        description: "Nombre de la ciudad"
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['Valencia']
+      - name: id_estacion
+        description: "ID único de la estación"
+        data_tests:
+          - not_null
+      - name: nombre_estacion
+        description: "Nombre legible de la estación"
+        data_tests:
+          - not_null
+      - name: promedio_diario_no2
+        description: "Promedio diario de NO₂ en µg/m³"
+        data_tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 500
+              config:
+                severity: warn
+      - name: promedio_diario_pm10
+        description: "Promedio diario de PM10 en µg/m³"
+        data_tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 600
+              config:
+                severity: warn
+      - name: promedio_diario_pm25
+        description: "Promedio diario de PM2.5 en µg/m³"
+        data_tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 500
+              config:
+                severity: warn
+      - name: pico_no2
+        description: "Valor máximo de NO₂ durante el día (µg/m³)"
+      - name: pico_pm10
+        description: "Valor máximo de PM10 durante el día (µg/m³)"
+      - name: total_mediciones_dia
+        description: "Número de mediciones usadas para calcular los promedios"
+        data_tests:
+          - not_null
+
+  - name: fct_air_quality_hourly
+    description: "Promedios horarios de calidad del aire por estación y ciudad."
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - fecha_hora
+            - id_estacion
+            - ciudad
+    columns:
+      - name: fecha_hora
+        description: "Timestamp truncado a la hora exacta"
+        data_tests:
+          - not_null
+      - name: ciudad
+        description: "Nombre de la ciudad"
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['Valencia']
+      - name: id_estacion
+        description: "ID único de la estación"
+        data_tests:
+          - not_null
+      - name: nombre_estacion
+        description: "Nombre legible de la estación"
+        data_tests:
+          - not_null
+      - name: promedio_no2
+        description: "Promedio horario de NO₂ en µg/m³"
+      - name: promedio_pm10
+        description: "Promedio horario de PM10 en µg/m³"
+      - name: promedio_pm25
+        description: "Promedio horario de PM2.5 en µg/m³"
+      - name: promedio_so2
+        description: "Promedio horario de SO₂ en µg/m³"
+      - name: promedio_ozono
+        description: "Promedio horario de O₃ en µg/m³"
+      - name: promedio_co
+        description: "Promedio horario de CO en µg/m³"
+      - name: total_mediciones_hora
+        description: "Número de mediciones usadas para calcular promedios horarios"
+        data_tests:
+          - not_null

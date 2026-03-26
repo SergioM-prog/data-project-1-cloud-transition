@@ -1,0 +1,22 @@
+air_quality_dbt:
+  outputs:
+
+    # Ejecución local: usa las credenciales de 'gcloud auth application-default login'
+    dev:
+      type: bigquery
+      method: oauth
+      project: "{{ env_var('DBT_PROJECT_ID') }}"
+      dataset: "air_quality_dataset_dev"
+      threads: 4
+      timeout_seconds: 300
+
+    # Ejecución en Cloud Run: usa la Service Account adjunta al job (ADC)
+    prod:
+      type: bigquery
+      method: oauth
+      project: "{{ env_var('DBT_PROJECT_ID') }}"
+      dataset: "air_quality_dataset_prod"
+      threads: 4
+      timeout_seconds: 300
+
+  target: dev

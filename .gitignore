@@ -26,3 +26,9 @@ envs/**/*.tfplan
 
 # Planes de terraform guardados
 *.tfplan
+
+# dbt
+src/dbt/target/
+src/dbt/dbt_packages/
+src/dbt/logs/
+src/dbt/dbt_internal_packages/

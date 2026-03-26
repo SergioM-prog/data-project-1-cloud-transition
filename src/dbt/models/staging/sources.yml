@@ -1,0 +1,23 @@
+version: 2
+
+sources:
+  - name: air_quality
+    description: "Datos crudos de calidad del aire ingestados por Dataflow desde la API de Valencia"
+    database: "{{ env_var('DBT_PROJECT_ID') }}"
+    schema: "air_quality_dataset_{{ env_var('DBT_ENV', 'dev') }}"
+    freshness:
+      warn_after: {count: 2, period: hour}
+      error_after: {count: 6, period: hour}
+    loaded_at_field: fecha_carg
+    tables:
+      - name: valencia_air
+        description: "Tabla cargada por Dataflow cada hora con los datos en tiempo real de las estaciones de Valencia"
+        columns:
+          - name: objectid
+            description: "Identificador único de la estación"
+            data_tests:
+              - not_null
+          - name: fecha_carg
+            description: "Timestamp de la medición según la API"
+            data_tests:
+              - not_null
