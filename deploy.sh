@@ -213,10 +213,10 @@ if [ "$ENV" = "dev" ]; then
     echo ""
     echo ">>> Ejecutando terraform destroy para el entorno 'dev'..."
     cd envs/dev/terraform/01_app
-    terraform destroy
+    terraform destroy -auto-approve
     cd ../../../..
     cd envs/dev/terraform/00_base
-    terraform destroy
+    terraform destroy -auto-approve
     cd ../../../..
     echo ""
     echo "Destroy completado."
