@@ -65,7 +65,7 @@ def run():
                 args.output,
                 schema=None, # Usamos el esquema ya existente en la tabla
                 write_disposition=beam.io.BigQueryDisposition.WRITE_APPEND,
-                create_disposition=beam.io.BigQueryDisposition.CREATE_IF_NEEDED
+                create_disposition=beam.io.BigQueryDisposition.CREATE_NEVER
             )
         )
 

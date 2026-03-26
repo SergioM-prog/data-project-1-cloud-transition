@@ -21,11 +21,7 @@ module "bigquery" {
     {
       table_id    = "valencia_air"
       schema_path = "${path.module}/../../schemas/valencia_air.json"
-    },
-    # {
-    #   table_id    = "valencia_air2"
-    #   schema_path = "${path.module}/schemas/valencia_air.json"
-    # }
+    }
   ]
 }
 

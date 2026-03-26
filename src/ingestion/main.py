@@ -2,7 +2,6 @@ import os
 import sys
 import json
 from datetime import datetime, timezone
-from zoneinfo import ZoneInfo
 from google.cloud import storage
 import requests
 
