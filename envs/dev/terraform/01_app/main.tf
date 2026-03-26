@@ -41,7 +41,7 @@ module "ingestion_trigger" {
 
   project_id  = var.project_id
   region      = var.region
-  name        = "air-quality-trigger-${var.environment}"
+  name        = "air-quality-ingestion-trigger-${var.environment}"
   description = "Despierta la ingesta de datos de Valencia"
   schedule    = "*/30 * * * *"
   

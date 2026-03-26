@@ -23,8 +23,8 @@ output "scheduler_sa_email" {
 }
 
 output "bq_dataset_id" {
-  description = "ID del dataset de BigQuery"
-  value       = module.bigquery.dataset_id
+  description = "ID del dataset Bronze de BigQuery"
+  value       = module.bigquery_bronze.dataset_id
 }
 
 output "dataflow_sa_email" {
@@ -39,10 +39,10 @@ output "dbt_sa_email" {
 
 output "silver_dataset_id" {
   description = "ID del dataset Silver (staging dbt)"
-  value       = google_bigquery_dataset.silver.dataset_id
+  value       = module.bigquery_silver.dataset_id
 }
 
 output "gold_dataset_id" {
   description = "ID del dataset Gold (marts dbt)"
-  value       = google_bigquery_dataset.gold.dataset_id
+  value       = module.bigquery_gold.dataset_id
 }

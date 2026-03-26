@@ -11,18 +11,37 @@ data "google_project" "project" {}
 # 1. DATA WAREHOUSE (BigQuery)
 # =============================================================================
 
-module "bigquery" {
-  source = "../../../../modules/bigquery"
-  region = var.region
-  enable_deletion_protection = false  # Permite terraform destroy limpio
+# CAPA BRONZE: Datos crudos (Ingesta vía Dataflow)
+module "bigquery_bronze" {
+  source                     = "../../../../modules/bigquery"
+  region                     = var.region
+  enable_deletion_protection = false 
   dataset_id                 = "air_quality_bronze_${var.environment}"
-  # Le pasamos la lista de tablas que queremos crear en este dataset
+  
   tables = [
     {
       table_id    = "valencia_air"
       schema_path = "${path.module}/../../schemas/valencia_air.json"
     }
   ]
+}
+
+# CAPA SILVER: Datos limpios y normalizados (Gestionado por dbt)
+module "bigquery_silver" {
+  source                     = "../../../../modules/bigquery"
+  region                     = var.region
+  enable_deletion_protection = false 
+  dataset_id                 = "air_quality_silver_${var.environment}"
+  tables                     = [] # dbt creará las tablas/vistas aquí
+}
+
+# CAPA GOLD: Agregados y analítica (Gestionado por dbt)
+module "bigquery_gold" {
+  source                     = "../../../../modules/bigquery"
+  region                     = var.region
+  enable_deletion_protection = false 
+  dataset_id                 = "air_quality_gold_${var.environment}"
+  tables                     = [] # dbt creará las tablas finales aquí
 }
 
 # =============================================================================
@@ -156,7 +175,7 @@ resource "google_project_iam_member" "dataflow_bq_job_user" {
 }
 
 resource "google_bigquery_dataset_iam_member" "dataflow_bq_data_editor" {
-  dataset_id = module.bigquery.dataset_id
+  dataset_id = module.bigquery_bronze.dataset_id
   role       = "roles/bigquery.dataEditor"
   member     = "serviceAccount:${module.dataflow_sa.email}"
 }
@@ -181,25 +200,7 @@ module "artifact_registry" {
 }
 
 # =============================================================================
-# 6. DBT: DATASETS (Arquitectura Medallón)
-# =============================================================================
-
-# Dataset Silver — vistas de staging gestionadas por dbt
-resource "google_bigquery_dataset" "silver" {
-  dataset_id                 = "air_quality_silver_${var.environment}"
-  location                   = var.region
-  delete_contents_on_destroy = true
-}
-
-# Dataset Gold — tablas de marts gestionadas por dbt
-resource "google_bigquery_dataset" "gold" {
-  dataset_id                 = "air_quality_gold_${var.environment}"
-  location                   = var.region
-  delete_contents_on_destroy = true
-}
-
-# =============================================================================
-# 7. DBT: IDENTIDAD Y PERMISOS
+# 6. DBT: IDENTIDAD Y PERMISOS
 # =============================================================================
 
 #------------Service Account----------
@@ -221,21 +222,21 @@ resource "google_project_iam_member" "dbt_bq_job_user" {
 
 # Leer datos del dataset Bronze (fuente: tabla valencia_air escrita por Dataflow)
 resource "google_bigquery_dataset_iam_member" "dbt_bronze_viewer" {
-  dataset_id = module.bigquery.dataset_id
+  dataset_id = module.bigquery_bronze.dataset_id
   role       = "roles/bigquery.dataViewer"
   member     = "serviceAccount:${module.dbt_sa.email}"
 }
 
 # Crear y actualizar vistas en Silver (capa staging)
 resource "google_bigquery_dataset_iam_member" "dbt_silver_editor" {
-  dataset_id = google_bigquery_dataset.silver.dataset_id
+  dataset_id = module.bigquery_silver.dataset_id
   role       = "roles/bigquery.dataEditor"
   member     = "serviceAccount:${module.dbt_sa.email}"
 }
 
 # Crear y actualizar tablas en Gold (capa marts)
 resource "google_bigquery_dataset_iam_member" "dbt_gold_editor" {
-  dataset_id = google_bigquery_dataset.gold.dataset_id
+  dataset_id = module.bigquery_gold.dataset_id
   role       = "roles/bigquery.dataEditor"
   member     = "serviceAccount:${module.dbt_sa.email}"
 }
