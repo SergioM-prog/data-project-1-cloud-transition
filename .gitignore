@@ -10,6 +10,7 @@ envs/**/*.tfvars
 # incluyendo valores de secretos de Secret Manager en texto plano.
 envs/**/*.tfstate
 envs/**/*.tfstate.backup
+envs/**/*.tfstate.lock.info
 
 # Directorio de trabajo de Terraform (plugins descargados, módulos, etc.)
 # Se regenera con 'terraform init', no necesita estar en el repo.

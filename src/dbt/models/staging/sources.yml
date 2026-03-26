@@ -4,7 +4,7 @@ sources:
   - name: air_quality
     description: "Datos crudos de calidad del aire ingestados por Dataflow desde la API de Valencia"
     database: "{{ env_var('DBT_PROJECT_ID') }}"
-    schema: "air_quality_dataset_{{ env_var('DBT_ENV', 'dev') }}"
+    schema: "air_quality_bronze_{{ env_var('DBT_ENV', 'dev') }}"
     freshness:
       warn_after: {count: 2, period: hour}
       error_after: {count: 6, period: hour}

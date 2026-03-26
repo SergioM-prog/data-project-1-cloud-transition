@@ -6,7 +6,7 @@ air_quality_dbt:
       type: bigquery
       method: oauth
       project: "{{ env_var('DBT_PROJECT_ID') }}"
-      dataset: "air_quality_dataset_dev"
+      dataset: "air_quality_gold_dev"   # fallback; el macro sobreescribe a silver/gold según el modelo
       threads: 4
       timeout_seconds: 300
 
@@ -15,7 +15,7 @@ air_quality_dbt:
       type: bigquery
       method: oauth
       project: "{{ env_var('DBT_PROJECT_ID') }}"
-      dataset: "air_quality_dataset_prod"
+      dataset: "air_quality_gold_prod"  # fallback; el macro sobreescribe a silver/gold según el modelo
       threads: 4
       timeout_seconds: 300
 

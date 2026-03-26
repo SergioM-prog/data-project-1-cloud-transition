@@ -72,7 +72,7 @@ resource "google_cloud_run_v2_job" "dataflow_launcher" {
         command = ["/bin/bash", "-c"]
         
         # UNA SOLA LÍNEA SIN SALTOS. Sino da error el job de dataflow porque ejecuta los comandos uno a uno si están en diferentes filas
-        args = ["gcloud dataflow flex-template run \"air-quality-batch-$(date +%s)\" --template-file-gcs-location=\"gs://${var.project_id}-${var.app_name}-temp-${var.environment}/templates/air-quality.json\" --region=\"europe-west8\" --worker-machine-type=\"e2-standard-2\" --service-account-email=\"${data.terraform_remote_state.base.outputs.dataflow_sa_email}\" --staging-location=\"gs://${var.project_id}-${var.app_name}-temp-${var.environment}/staging\" --parameters=\"input=gs://${var.project_id}-${var.app_name}-raw-${var.environment}/raw/Valencia,output=${var.project_id}:air_quality_dataset_${var.environment}.valencia_air,temp_location=gs://${var.project_id}-${var.app_name}-temp-${var.environment}/staging\""]        
+        args = ["gcloud dataflow flex-template run \"air-quality-batch-$(date +%s)\" --template-file-gcs-location=\"gs://${var.project_id}-${var.app_name}-temp-${var.environment}/templates/air-quality.json\" --region=\"europe-west8\" --worker-machine-type=\"e2-standard-2\" --service-account-email=\"${data.terraform_remote_state.base.outputs.dataflow_sa_email}\" --staging-location=\"gs://${var.project_id}-${var.app_name}-temp-${var.environment}/staging\" --parameters=\"input=gs://${var.project_id}-${var.app_name}-raw-${var.environment}/raw/Valencia,output=${var.project_id}:air_quality_bronze_${var.environment}.valencia_air,temp_location=gs://${var.project_id}-${var.app_name}-temp-${var.environment}/staging\""]        
         }
     }
   }

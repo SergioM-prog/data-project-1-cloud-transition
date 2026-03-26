@@ -15,7 +15,7 @@ module "bigquery" {
   source = "../../../../modules/bigquery"
   region = var.region
   enable_deletion_protection = false  # Permite terraform destroy limpio
-  dataset_id                 = "air_quality_dataset_${var.environment}"
+  dataset_id                 = "air_quality_bronze_${var.environment}"
   # Le pasamos la lista de tablas que queremos crear en este dataset
   tables = [
     {

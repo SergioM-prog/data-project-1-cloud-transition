@@ -3,7 +3,7 @@
 # =============================================================================
 
 resource "google_bigquery_dataset" "dataset" {
-  # Nombramos el dataset dinámicamente: ej. air_quality_dataset_dev
+  # Nombramos el dataset dinámicamente: ej. air_quality_bronze_dev
   dataset_id                 = var.dataset_id
   location                   = var.region
   delete_contents_on_destroy = !var.enable_deletion_protection
